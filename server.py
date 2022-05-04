@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 import webbrowser
+from forms import *
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "Tarantino_is_ugly"
@@ -32,10 +33,13 @@ def promotion_image():
 
 @app.route("/astronaut_selection", methods=['GET', 'POST'])
 def reaction():
+    form = LoginForm()
+    # if not form.validate_on_submit():
+    #     return "<h1>BAD REQUEST</h1>", 404
     if request.method == "GET":
-        return render_template("astro_selection.html")
+        return render_template("astro_selection.html", list=form)
     elif request.method == "POST":
-        return redirect("https://lkml.org/", code=200)
+        return render_template("auto_answer.html", form=form)
 
 
 @app.route("/load_image", methods=["GET", "POST"])
@@ -78,5 +82,10 @@ def list_prof(outt):
     return render_template("list_prof.html", value=outt, list=list_)
 
 
-webbrowser.open("http://127.0.0.1:8080/Машина")
+@app.route("/answer", methods=["POST", "GET"])
+def answer():
+    return redirect("/astronaut_selection")
+
+
+webbrowser.open("http://127.0.0.1:8080/answer")
 app.run(port=8080)
