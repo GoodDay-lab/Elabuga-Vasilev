@@ -96,5 +96,18 @@ def login():
         return "<h1>Error</h1>"
 
 
-webbrowser.open("http://127.0.0.1:8080/login")
-app.run(port=8080)
+@app.route("/distribution")
+def distrib():
+    list_ = ['Бэккет Рейнольдс', "Эмануэль Густав", "Шарль Де Голь", "Эрнесто Мадуро"]
+    return render_template("distrib.html", list = list_)
+
+
+@app.route("/tables/<sex>/<int:age>")
+def table(sex, age):
+    color = "#ff0000" if sex == 'female' else "#0000ff"
+    image = "/static/img/alien_b.jpeg" if age > 21 else "/static/img/alien_l.jpeg"
+    return render_template("tables.html", color=color, filename=image)
+
+
+webbrowser.open("http://127.0.0.1:8081/tables/male/20")
+app.run(port=8081)
