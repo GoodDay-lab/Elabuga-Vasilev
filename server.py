@@ -1,8 +1,11 @@
+import os
+
 from flask import Flask, render_template, request, redirect, url_for
 import webbrowser
 from forms import *
 import json
 from random import randrange
+import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "Tarantino_is_ugly"
@@ -57,8 +60,17 @@ def load_photo():
 
 @app.route("/carousel", methods=["GET", "POST"])
 def carousel():
+    form = UploadForm()
     if request.method == "GET":
-        return render_template("carousel.html")
+        result = []
+        for _, _, files in os.walk("./static/img/carousel"):
+            result = ["/static/img/carousel/" + f for f in files]
+        return render_template("carousel.html", form=form, files=result)
+    elif request.method == "POST":
+        f = request.files['file']
+        with open("./static/img/carousel/" + str(uuid.uuid4()) + '.jpg', mode='wb') as file:
+            file.write(f.read())
+        return redirect("/carousel")
 
 
 @app.route("/choice/<planet>")
@@ -119,5 +131,5 @@ def member():
     return render_template("member.html", name=crewmate['name'], filename=crewmate['photo'], specs=crewmate['specs'])
 
 
-webbrowser.open("http://127.0.0.1:8081/member")
+webbrowser.open("http://127.0.0.1:8081/carousel")
 app.run(port=8081)
