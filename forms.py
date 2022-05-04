@@ -9,4 +9,12 @@ class LoginForm(FlaskForm):
     email = StringField('Почта', validators=[DataRequired()])
     motivation = TextAreaField('Мотивация')
     # sex = RadioField('Пол', validators=[DataRequired()])
-    submit = SubmitField('Войти')
+    submit = SubmitField('Заргаться')
+
+
+class Authorization(FlaskForm):
+    austronaut_id = StringField("ID астронавта", validators=[DataRequired()])
+    austronaut_passw = PasswordField("Пароль астронавта", validators=[DataRequired()])
+    capitain_id = StringField("ID капитана", validators=[DataRequired()])
+    capitain_passw = PasswordField("Пароль капитана", validators=[DataRequired()])
+    submit = SubmitField("Доступ")

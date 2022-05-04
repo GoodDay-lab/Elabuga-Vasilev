@@ -87,5 +87,14 @@ def answer():
     return redirect("/astronaut_selection")
 
 
-webbrowser.open("http://127.0.0.1:8080/answer")
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    form = Authorization()
+    if request.method == "GET":
+        return render_template("login.html", form=form)
+    else:
+        return "<h1>Error</h1>"
+
+
+webbrowser.open("http://127.0.0.1:8080/login")
 app.run(port=8080)
