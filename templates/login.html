@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method="post">
+     <div class="nothing">
+      <img src="/static/img/image.png" alt="Эмблема ту-ту :(">
+      <h1>Аварийный доступ</h1>
+    </div>
+
+    {% for field in form if field.name != 'csrf_token'%}
+    <div>
+        <h6 class="nothing">{{field.name}}</h6>
+        <p class="nothing">{{ field() }}</p>
+    </div>
+    {% endfor %}
+</form>
+{% endblock %}
