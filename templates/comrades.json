@@ -1,0 +1,19 @@
+{
+  "crew": [
+    {
+      "name": "Michoel Jackson",
+      "photo": "/static/img/crew/index.jpeg",
+      "specs": "Specialist for defence against aliens!"
+    },
+    {
+      "name": "Sandra M'Collan",
+      "photo": "/static/img/crew/index1.jpeg",
+      "specs": "Biologic scientist"
+    },
+    {
+      "name": "Jhon Doe",
+      "photo": "/static/img/crew/index2.jpeg",
+      "specs": "No one called him, he came himself.."
+    }
+  ]
+}

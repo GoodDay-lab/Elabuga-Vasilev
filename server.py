@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for
 import webbrowser
 from forms import *
+import json
+from random import randrange
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "Tarantino_is_ugly"
@@ -109,5 +111,13 @@ def table(sex, age):
     return render_template("tables.html", color=color, filename=image)
 
 
-webbrowser.open("http://127.0.0.1:8081/tables/male/20")
+@app.route("/member")
+def member():
+    f = open("templates/comrades.json")
+    dict_ = json.load(f)
+    crewmate = dict_['crew'][randrange(0, len(dict_['crew']))]
+    return render_template("member.html", name=crewmate['name'], filename=crewmate['photo'], specs=crewmate['specs'])
+
+
+webbrowser.open("http://127.0.0.1:8081/member")
 app.run(port=8081)
