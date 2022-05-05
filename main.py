@@ -45,24 +45,6 @@ from forms.login import LoginForm
 from forms.quiz import QuizForm
 from forms.register import RegisterForm
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
-login_manager = LoginManager()
-login_manager.init_app(app)
-
-
-def sound_the_word(word, filename):
-    r = requests.get(
-        "https://speech.tatar/synthesize_tatar_hack",
-        params={"text": word},
-        headers={"Content-Type": "audio/wav"},
-    )
-    filename = f"media/{filename}.wav"
-    a = open("static/" + filename, "wb")
-    a.write(r.content)
-    a.close()
-    return filename
-
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
@@ -72,6 +54,7 @@ user_progress = {}
 max_question_id = 1
 quiz_analyze_session = None
 table_stage2time = {0: 0, 1: 1, 2: 3, 3: 5, 4: 6, 5: 13, 6: 28, 7: 58, 8: 118}
+
 
 
 def training_dict():
@@ -108,49 +91,6 @@ def training_dict():
                 try_list = [i[0] for i in final_dict[word][2]]
                 if ch.word not in try_list:
                     final_dict[word][2].append(ch.word_ru)
-            shuffle(final_dict[word][2])
-            for i in range(len(final_dict[word][2])):
-                ind = 1 if final_dict[word][2][i] == final_dict[word][1] else 0
-                final_dict[word][2][i] = (final_dict[word][2][i], ind)
-        return final_dict
-    except Exception:
-        return []
-
-
-def training2_dict():
-    try:
-        now_time = datetime.datetime.now()
-        final_dict = []
-        wordlist = list(quiz_analyze_session.query(Word).all())
-        userwordlist = list(
-            quiz_analyze_session.query(Word)
-            .filter(Word.id.in_([int(i) for i in current_user.words.split(",")]))
-            .all()
-        )
-        shuffle(wordlist)
-        shuffle(userwordlist)
-        for word in range(len(userwordlist)):
-            word_level = (
-                quiz_analyze_session.query(Word_level)
-                .filter(
-                    Word_level.word_id == userwordlist[word].id,
-                    Word_level.user_id == current_user.id,
-                )
-                .first()
-            )
-            date = word_level.date
-            stage = word_level.word_level
-            if stage == 8:
-                quiz_analyze_session.delete(userwordlist[word], word_level)
-                quiz_analyze_session.commit()
-            final_dict.append([userwordlist[word].word])
-            final_dict[word].append(userwordlist[word].word_ru)
-            final_dict[word].append([userwordlist[word].word])
-            while len(final_dict[word][2]) < 4:
-                ch = choice(wordlist)
-                try_list = [i[0] for i in final_dict[word][2]]
-                if ch.word not in try_list:
-                    final_dict[word][2].append(ch.word)
             shuffle(final_dict[word][2])
             for i in range(len(final_dict[word][2])):
                 ind = 1 if final_dict[word][2][i] == final_dict[word][1] else 0
@@ -198,48 +138,20 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1] in ["epub"]
 
 
-def to_normal_words(html_str, delimitel):
-    try:
-        ind = html_str.index(delimitel) + len(delimitel) + 1
-        final_str = html_str[ind : -len(delimitel) - 3]
-        return final_str
-    except Exception as error:
-        return None
+def translate_tat_to_rus_changed(word_tat):
+    url = "https://translated-mymemory---translation-memory.p.rapidapi.com/api/get"
 
-
-def translate_tat_to_rus(text):
-    url = "https://translate.tatar/translate_hack/"
-    params = {"lang": 1, "text": text}
-    translated_text = requests.get(url, params=params).text.split("\n")
-    final_json = {}
-    if translated_text[0] != text:
-        final_json["word"] = text
-        try:
-            final_json["speech_part"] = to_normal_words(translated_text[1], "POS")
-        except Exception as error:
-            final_json["speech_part"] = None
-        try:
-            final_json["main_translation"] = to_normal_words(
-                translated_text[-1][:-6], "mt"
-            )
-        except Exception as error:
-            final_json["main_translation"] = None
-        try:
-            final_json["translations"] = [
-                to_normal_words(i, "translation") for i in translated_text[2:-3]
-            ]
-        except Exception as error:
-            final_json["translations"] = [None]
-        try:
-            final_json["examples"] = [
-                i.split(" – ")
-                for i in to_normal_words(translated_text[-3], "examples").split(".  ")
-            ]
-        except Exception as error:
-            final_json["examples"] = [[None, None]]
-        return final_json
-    else:
-        return final_json
+    headers = {
+        "X-RapidAPI-Host": "translated-mymemory---translation-memory.p.rapidapi.com",
+        "X-RapidAPI-Key": "e1de9768b4msh86700c019cdceb5p16d34ejsnbeabd5b78f09"
+    }
+    
+    symbols = '.,?!@#$%^&*()_+-=":;[]{}<>~`'
+    for i in symbols:
+        word_tat = word_tat.replace(i, '')
+    querystring = {"langpair": "tt|ru", "q": word_tat, "mt": "1", "onlyprivate": "0", "de": "a@b.c"}
+    response = requests.request("GET", url, headers=headers, params=querystring).json()
+    return response['responseData']['translatedText']
 
 
 def get_book(book_id):
@@ -358,16 +270,14 @@ def settings():
 def profile():
     created_time = datetime.datetime.strptime(str(current_user.created_date)[:-10], "%Y-%m-%d %H:%M")
     using_time = str(datetime.datetime.now() - created_time)[:-10].replace('days,', 'дн')
-    print(using_time)
     using_time = using_time[:-3] + "ч " + using_time[-2:] + "мин"
-    print(using_time)
     items_list = [
         ["Имя", current_user.name], ["Почта", current_user.email],
         ["Телеграм", current_user.telegram_id if current_user.telegram_id is not None else "Не указан"],
         ["Дата создания", str(created_time)],
         ["Время использования", using_time],
         ["Кол-во слов", len(current_user.words.split(","))],
-        ]
+    ]
     return render_template("profile.html", items_list=items_list)
 
 
@@ -432,7 +342,7 @@ def books():
                 Book.user_author_id == current_user.id,
                 Book.title.like(f"%{request.form.get('field')}%"),
             )
-            .all()
+            .all()odas
         )
         return render_template("books.html", title="мои слова", books=books)
     books = db_sess.query(Book).filter(Book.user_author_id == current_user.id).all()
