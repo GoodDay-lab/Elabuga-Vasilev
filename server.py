@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import webbrowser
 from forms import *
 import json
@@ -9,7 +9,6 @@ import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "Tarantino_is_ugly"
-
 
 @app.route('/index/<name>')
 @app.route("/<name>")
@@ -103,11 +102,13 @@ def answer():
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
-    form = Authorization()
+    form = LoginForm2()
     if request.method == "GET":
         return render_template("login.html", form=form)
     else:
-        return "<h1>Error</h1>"
+        if form.password.data == '1':
+            return redirect('/promotion_image')
+        return "<h1>Error!</h1>"
 
 
 @app.route("/distribution")
@@ -131,5 +132,5 @@ def member():
     return render_template("member.html", name=crewmate['name'], filename=crewmate['photo'], specs=crewmate['specs'])
 
 
-webbrowser.open("http://127.0.0.1:8081/carousel")
+webbrowser.open("http://127.0.0.1:8081/login")
 app.run(port=8081)
