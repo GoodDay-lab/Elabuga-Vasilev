@@ -22,7 +22,6 @@ def add_work():
         return render_template("add_work.html", form=form, LOGGED_PERSON_NAME=name)
     else:
         id = session['id']
-        print('[!]', id)
         s = create_session()
         job = Jobs()
         job.team_leader = int(id)
@@ -36,6 +35,33 @@ def add_work():
         s.commit()
         s.close()
         return "<h1>Форма добавлена</h1>"
+
+
+@app.route("/edit/<int:work_id>", methods=['POST', 'GET'])
+def editing(work_id):
+    form = Job()
+    id = session['id']
+    name = session['name']
+    if request.method == 'GET':
+        return render_template('add_work.html', LOGGED_PERSON_NAME=name, form=form)
+    elif request.method == 'POST':
+        s = create_session()
+        work = s.query(Jobs).filter(Jobs.id == work_id).first()
+        s.close()
+        if work.team_leader == int(id):
+            s = create_session()
+            job = s.query(Jobs).filter(work.id == Jobs.id).first()
+            job.team_leader = int(id)
+            job.job = form.job.data
+            job.work_size = int(form.work_size.data)
+            job.collaborators = int(id)
+            job.start_date = form.start_date.data
+            job.end_date = form.end_date.data
+            job.is_finished = False
+            s.commit()
+            s.close()
+            return render_template('add_work.html', LOGGED_PERSON_NAME=name, form=form)
+        return "<h1> Access denied </h1>"
 
 
 @app.route('/index/<name>')
