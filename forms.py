@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, FileField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, FileField, DateField
 from wtforms.validators import DataRequired
 
 
@@ -30,3 +30,12 @@ class LoginForm2(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired()])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
+
+
+class Job(FlaskForm):
+    job = StringField("Название работы")
+    work_size = StringField("Объём часов")
+    collaborators = StringField("ID работников")
+    start_date = DateField("Дата начала")
+    end_date = DateField("Дата окончания")
+    submit = SubmitField('Отправить')

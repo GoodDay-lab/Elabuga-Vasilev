@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 style="text-align: center;">Works log</h1>
+  {% for work in works %}
+    <div style="background: #F0F0F0;" align="center">
+        <h2>Action №{{ loop.index }}</h2>
+        <h5>Work id: {{ work.id }}</h5>
+        <h5>Work name: {{ work.job }}</h5>
+    </div>
+  {% endfor %}
+{% endblock %}

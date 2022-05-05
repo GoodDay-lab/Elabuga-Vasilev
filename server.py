@@ -1,14 +1,42 @@
 import os
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, make_response
 import webbrowser
 from forms import *
 import json
 from random import randrange
 import uuid
+from data.db_session import *
+from data.__all_models import *
 
 app = Flask(__name__)
+global_init("/db/blogs.sqlite")
 app.config['SECRET_KEY'] = "Tarantino_is_ugly"
+
+
+@app.route("/add_work", methods=['POST', 'GET'])
+def add_work():
+    form = Job()
+    name = session['name']
+    if request.method == 'GET':
+        return render_template("add_work.html", form=form, LOGGED_PERSON_NAME=name)
+    else:
+        id = session['id']
+        print('[!]', id)
+        s = create_session()
+        job = Jobs()
+        job.team_leader = int(id)
+        job.job = form.job.data
+        job.work_size = int(form.work_size.data)
+        job.collaborators = int(id)
+        job.start_date = form.start_date.data
+        job.end_date = form.end_date.data
+        job.is_finished = False
+        s.add(job)
+        s.commit()
+        s.close()
+        return "<h1>Форма добавлена</h1>"
+
 
 @app.route('/index/<name>')
 @app.route("/<name>")
@@ -32,7 +60,8 @@ def image():
 
 @app.route("/promotion_image")
 def promotion_image():
-    return render_template("promotion_image.html")
+    LOGGED = session['name']
+    return render_template("promotion_image.html", LOGGED_PERSON_NAME=LOGGED)
 
 
 @app.route("/astronaut_selection", methods=['GET', 'POST'])
@@ -106,15 +135,31 @@ def login():
     if request.method == "GET":
         return render_template("login.html", form=form)
     else:
-        if form.password.data == '1':
-            return redirect('/promotion_image')
+        s = create_session()
+        user = s.query(User).first()
+        s.close()
+        if user:
+            id_ = user.id
+            user_name = user.name
+            session['id'] = str(id_)
+            session['name'] = str(user_name)
+            return make_response(redirect('/distribution'))
         return "<h1>Error!</h1>"
+
+
+@app.route("/works", methods=["POST", "GET"])
+def works():
+    name = session['name']
+    s = create_session()
+    works = s.query(Jobs).all()
+    return render_template("all_works.html", works=works, LOGGED_PERSON_NAME=name)
 
 
 @app.route("/distribution")
 def distrib():
+    name = session['name']
     list_ = ['Бэккет Рейнольдс', "Эмануэль Густав", "Шарль Де Голь", "Эрнесто Мадуро"]
-    return render_template("distrib.html", list = list_)
+    return render_template("distrib.html", list = list_, LOGGED_PERSON_NAME = name)
 
 
 @app.route("/tables/<sex>/<int:age>")
@@ -132,5 +177,5 @@ def member():
     return render_template("member.html", name=crewmate['name'], filename=crewmate['photo'], specs=crewmate['specs'])
 
 
-webbrowser.open("http://127.0.0.1:8081/login")
+webbrowser.open("http://127.0.0.1:8081/add_work")
 app.run(port=8081)
