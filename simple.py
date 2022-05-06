@@ -10,6 +10,3 @@ def main(port):
     db_session.global_init("/db/blogs.sqlite")
     app.register_blueprint(api.blueprint)
     app.run(port=port)
-    
-
-main(7000)

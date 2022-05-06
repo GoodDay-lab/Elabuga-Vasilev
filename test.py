@@ -3,8 +3,8 @@ import requests
 from data import db_session
 
 
-url = "http://127.0.0.1:7000/api/jobs/{}"
-url1 = "http://127.0.0.1:7000/api/users/{}"
+url = "http://127.0.0.1:8081/api/jobs/{}"
+url1 = "http://127.0.0.1:8081/api/users/{}"
 
 
 def test_add_job():

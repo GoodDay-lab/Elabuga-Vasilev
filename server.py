@@ -1,5 +1,6 @@
 import os
-
+import requests
+import api
 from flask import Flask, render_template, request, redirect, url_for, session, make_response
 import webbrowser
 from forms import *
@@ -12,6 +13,31 @@ from data.__all_models import *
 app = Flask(__name__)
 global_init("/db/blogs.sqlite")
 app.config['SECRET_KEY'] = "Tarantino_is_ugly"
+
+
+def yandex_api_get_cord(city):
+    url = 'https://geocode-maps.yandex.ru/1.x/'
+    params = {'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
+              'geocode': city,
+              'format': 'json',
+              'offset': 1,
+              'size': '400,400'}
+    response = requests.get(url, params=params)
+    for variant in json.loads(response.content)['response']['GeoObjectCollection']['featureMember']:
+        return variant['GeoObject']['Point']['pos'].replace(' ', ',')
+
+
+def yandex_api_get_image(cords):
+    url = 'https://static-maps.yandex.ru/1.x/'
+    params = {
+        'l': 'sat',
+        'll': cords,
+        'spn': '0.1,0.1'
+    }
+    response = requests.get(url, params=params)
+    f = open(f'./static/img/cities/{cords.replace(",", "_")}.png', 'wb')
+    f.write(response.content)
+    return f.name
 
 
 @app.route("/add_work", methods=['POST', 'GET'])
@@ -36,6 +62,16 @@ def add_work():
         s.close()
         return "<h1>Форма добавлена</h1>"
 
+
+@app.route("/users_show/<int:user_id>")
+def get_city_photo(user_id):
+    r = requests.get(f"http://127.0.0.1:8081/api/users/{user_id}").json()['data']
+    city_from = r.get("city_from") or "Moscow"
+    cord = yandex_api_get_cord(city_from)
+    image_name = yandex_api_get_image(cord)[1:]
+    return render_template("crew_city.html", LOGGED_PERSON_NAME = session['name'],
+                    name=f"{r.get('name')} {r.get('surname')}", city=city_from, image=image_name)
+    
 
 @app.route("/edit/<int:work_id>", methods=['POST', 'GET'])
 def editing(work_id):
@@ -162,7 +198,7 @@ def login():
         return render_template("login.html", form=form)
     else:
         s = create_session()
-        user = s.query(User).first()
+        user = s.query(User).filter(form.password.data == User.hashed_password).first()
         s.close()
         if user:
             id_ = user.id
@@ -203,5 +239,6 @@ def member():
     return render_template("member.html", name=crewmate['name'], filename=crewmate['photo'], specs=crewmate['specs'])
 
 
-webbrowser.open("http://127.0.0.1:8081/add_work")
+webbrowser.open("http://127.0.0.1:8081/login")
+app.register_blueprint(api.blueprint)
 app.run(port=8081)
