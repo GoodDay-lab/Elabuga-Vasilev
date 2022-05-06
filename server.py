@@ -65,13 +65,29 @@ def add_work():
 
 @app.route("/users_show/<int:user_id>")
 def get_city_photo(user_id):
-    r = requests.get(f"http://127.0.0.1:8081/api/users/{user_id}").json()['data']
+    r = requests.get(f"http://127.0.0.1:8081/api/users/{user_id}").json()
+    if not r['status']:
+        return "Error"
+    r = r['data']
     city_from = r.get("city_from") or "Moscow"
     cord = yandex_api_get_cord(city_from)
     image_name = yandex_api_get_image(cord)[1:]
     return render_template("crew_city.html", LOGGED_PERSON_NAME = session['name'],
                     name=f"{r.get('name')} {r.get('surname')}", city=city_from, image=image_name)
-    
+
+
+@app.route("/delete_job/<int:job_id>")
+def delete_job(job_id):
+    id = session['id']
+    s = False
+    job = requests.get(f"http://127.0.0.1:8081/api/jobs/{job_id}").json()
+    if not job['status']:
+        return "Error" 
+    job = job['data']
+    if job['team_leader'] == int(id):
+        s = requests.delete(f"http://127.0.0.1:8081/api/jobs/{job_id}").json()['status']
+    return f"<h1> Status {s} </h1>"
+
 
 @app.route("/edit/<int:work_id>", methods=['POST', 'GET'])
 def editing(work_id):
